@@ -21,10 +21,9 @@ WORD_FORMAT = """
 <w>
     <p>
         <a name="{word}"/><b>{current_word}</b>{pronunciation}{genre}
-        <br/>
+        <ol>{definitions}</ol>
         <br/>
         {etymology}
-        <ol>{definitions}</ol>
     </p>
     {var}
 </w>
