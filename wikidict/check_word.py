@@ -45,6 +45,10 @@ def filter_html(html: str, locale: str) -> str:
     for span in bs.find_all("span", {"class": "trad-exposant"}):
         span.decompose()
 
+    # Filter out result of <math> and <chem>
+    for span in bs.find_all("span", {"class": "mwe-math-element"}):
+        span.decompose()
+
     # Adapt the formatting for the ES locale as it differs from other locales
     if locale == "es":
         dts = bs.find_all("dt")
@@ -81,6 +85,9 @@ def filter_html(html: str, locale: str) -> str:
         # external autonumber
         for a in bs.find_all("a", {"class": "external autonumber"}):
             a.decompose()
+        # attention image
+        for a in bs.find_all("a", {"title": "alt = attention"}):
+            a.replaceWith("⚠")
         # other anchors
         for a in bs.find_all("a", href=True):
             if a["href"].lower().startswith(("#cite", "#ref", "#voir")):

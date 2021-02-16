@@ -183,7 +183,6 @@ templates_ignored = (
     "Import",
     "laé",
     "lien-ancre-étym",
-    "lien web",
     "Modèle",
     "Ouvrage",
     "ouvrage",
@@ -414,7 +413,6 @@ templates_italic = {
     "scol": "Éducation",
     "scolaire": "Éducation",
     "sexe": "Sexualité",
-    "sigle": "Sigle",
     "SMS": "Langage SMS",
     "sociol": "Sociologie",
     "sout": "Soutenu",
@@ -446,6 +444,7 @@ templates_italic = {
     "verlan": "Verlan",
     "vête": "Habillement",
     "volley": "Volley-ball",
+    "vulg": "Vulgaire",
     "zool": "Zoologie",
     "zootechnie": "Zoologie",
 }
@@ -470,6 +469,9 @@ templates_multi = {
     # {{1er}}
     # {{1er|mai}}
     "1er": "f\"1{superscript('er')}{'&nbsp;' + parts[1] if len(parts) > 1 else ''}\"",
+    # {{Arabe|ن و ق}}
+    "Arab": "parts[1] if len(parts) > 1 else 'arabe'",
+    "Arabe": "parts[1] if len(parts) > 1 else 'arabe'",
     "Braille": "parts[1]",
     # {{comparatif de|bien|fr|adv}}
     "comparatif de": "sentence(parts)",
@@ -479,6 +481,8 @@ templates_multi = {
     "cf": "f\"→ voir{' ' + concat([italic(p) for p in parts[1:] if p and '=' not in p], ', ', ' et ') if len(parts) > 1 else ''}\"",  # noqa
     # {{circa|1150}}
     "circa": "term('c. ' + [p for p in parts if p and '=' not in p][1])",
+    # {{Cyrl|Сергей}}
+    "Cyrl": "parts[1] if len(parts) > 1 else 'cyrillique'",
     # {{créatures|fr|mythologiques}
     "créatures": "term('Mythologie')",
     # {{couleur|#B0F2B6}}
@@ -646,6 +650,7 @@ templates_other = {
     "mplur": "<i>masculin pluriel</i>",
     "msing": "<i>masculin singulier</i>",
     "n": "<i>neutre</i>",
+    "non standard": "⚠ Il s’agit d’un terme utilisé qui n’est pas d’un usage standard.",
     "nombre ?": "Nombre à préciser",
     "note": "<b>Note&nbsp;:</b>",
     "note-fr-féminin-homme": "<i>Ce mot féminin n’a pas de masculin correspondant, et il peut désigner des hommes.</i>",  # noqa
@@ -653,7 +658,7 @@ templates_other = {
     "note-gentilé": "Ce mot est un gentilé : il désigne les habitants d’un lieu, les personnes qui en sont originaires ou qui le représentent (par exemple, les membres d’une équipe sportive).",  # noqa
     "note-majuscule-taxo": "En biologie, le nom binominal et les autres noms scientifiques (en latin) prennent toujours une majuscule. En français, les naturalistes mettent fréquemment une majuscule aux noms de taxons supérieurs au genre. Un nom vernaculaire ne prend pas de majuscule, mais on peut en mettre une quand on veut expliciter le fait que l’on ne parle pas d’individus, mais que l’on veut parler de l’espèce, du genre, de la famille, de l’ordre, etc.",  # noqa
     "note-majuscule-taxon": "En biologie, le nom binominal et les autres noms scientifiques (en latin) prennent toujours une majuscule. En français, les naturalistes mettent fréquemment une majuscule aux noms de taxons supérieurs au genre. Un nom vernaculaire ne prend pas de majuscule, mais on peut en mettre une quand on veut expliciter le fait que l’on ne parle pas d’individus, mais que l’on veut parler de l’espèce, du genre, de la famille, de l’ordre, etc.",  # noqa
-    "peu attesté": "/!\\ Ce terme est très peu attesté.",
+    "peu attesté": "⚠ Ce terme est très peu attesté.",
     "o": "<i>neutre</i>",
     "p": "<i>pluriel</i>",
     "palind": "<i>palindrome</i>",
@@ -689,6 +694,9 @@ def last_template_handler(
         >>> last_template_handler(["Citation/Edmond Nivoit/Notions élémentaires sur l’industrie dans le département des Ardennes/1869|171"], "fr")
         "Edmond <span style='font-variant:small-caps'>Nivoit</span>, <i>Notions élémentaires sur l’industrie dans le département des Ardennes</i>, 1869, page 171"
 
+        >>> last_template_handler(["code langue", "créole guyanais"], "fr")
+        'gcr'
+
         >>> last_template_handler(["R:TLFi"], "fr", "pedzouille")
         '«&nbsp;pedzouille&nbsp;», dans <i>TLFi, Le Trésor de la langue française informatisé</i>, 1971–1994'
         >>> last_template_handler(["R:TLFi", "pomme"], "fr", "pedzouille")
@@ -714,6 +722,9 @@ def last_template_handler(
         '<span style="line-height: 0px;"><span style="font-size:larger">الحَسَن</span></span> <small>(elHasan_)</small>'
         >>> last_template_handler(["ar-ab", "maktûbũ"], "fr")
         '<span style="line-height: 0px;"><span style="font-size:larger">مَكْتُوبٌ</span></span>'
+
+        >>> last_template_handler(["nom langue", "gcr"], "fr")
+        'créole guyanais'
 
     """  # noqa
     from .langs import langs
@@ -748,6 +759,13 @@ def last_template_handler(
             return f"{author}, {italic(book)}, {date}"
         return f"{author}, {italic(book)}, {date}, page {page}"
 
+    if tpl == "code langue":
+        lang = parts[0]
+        for code, l10n in langs.items():
+            if l10n == lang:
+                return code
+        return ""
+
     if tpl == "R:TLFi":
         w = parts[0] if parts else word
         return f"«&nbsp;{w}&nbsp;», dans <i>TLFi, Le Trésor de la langue française informatisé</i>, 1971–1994"
@@ -758,9 +776,12 @@ def last_template_handler(
     if tpl == "Légifrance":
         return data["texte"]
 
+    if tpl == "nom langue":
+        return langs[parts[0]]
+
     if tpl in ("ar-mot", "ar-terme"):
         return f'<span style="line-height: 0px;"><span style="font-size:larger">{arabiser(parts[0])}</span></span> <small>({parts[0]})</small>'  # noqa
-    if tpl in ("ar-ab"):
+    if tpl == "ar-ab":
         return f'<span style="line-height: 0px;"><span style="font-size:larger">{arabiser(parts[0])}</span></span>'
 
     # This is a country in the current locale
