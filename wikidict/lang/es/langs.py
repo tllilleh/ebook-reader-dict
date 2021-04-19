@@ -569,6 +569,8 @@ langs = {
     "kyr": "kuruaya",
     "kyz": "kayabí",
     "la": "latín",
+    "la-lat": "latín tardío",
+    "la-med": "latín medieval",
     "la-vul": "latín vulgar",
     "lac": "lacandón",
     "lad": "judeoespañol",
@@ -668,6 +670,7 @@ langs = {
     "mrw": "maranao",
     "ms": "malayo",
     "mt": "maltés",
+    "mtn": "matagalpa",
     "mto": "mixe de Totontepec",
     "mun": "munda",
     "mus": "maskoki",
@@ -1175,5 +1178,5 @@ langs = {
     "zrp": "judeofrancés",
     "zu": "zulú",
     "zun": "zuñi",
-}  # 1,170
+}  # 1,173
 # END

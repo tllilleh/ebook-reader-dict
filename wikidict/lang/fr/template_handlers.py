@@ -10,6 +10,7 @@ from ...user_functions import (
     extract_keywords_from,
     int_to_roman,
     italic,
+    number,
     strong,
     superscript,
     term,
@@ -40,7 +41,7 @@ def render_abreviation(tpl: str, parts: List[str], data: Dict[str, str]) -> str:
     >>> render_abreviation("abréviation", ["fr"], defaultdict(str, {"nolien": "oui"}))
     '<i>(Abréviation)</i>'
     """  # noqa
-    if not parts or not data:
+    if not parts and not data:
         return italic("(Abréviation)")
 
     phrase = "Abréviation"
@@ -142,7 +143,7 @@ def render_apherese(tpl: str, parts: List[str], data: Dict[str, str]) -> str:
     >>> render_apherese("aphérèse", ["fr"], defaultdict(str, {"de": "enfant", "texte": "minot", "nolien": "oui"}))
     'aphérèse de <i>enfant</i>'
     """  # noqa
-    if not parts or not data:
+    if not parts and not data:
         return tpl
 
     auto_cap = data["m"] in ("1", "oui")
@@ -543,6 +544,10 @@ def render_lien_web(tpl: str, parts: List[str], data: Dict[str, str]) -> str:
     '<i>(anglais)</i> Massoumeh Price, <i>Translation Movements in Iran; Sassanian Era to Year 2000, Expansion, Preservation and Modernization</i>, Iran Chamber, 2000. Consulté le 13 octobre 2006'
     >>> render_lien_web("Lien web", [], defaultdict(str, {"langue":"en", "titre":"Islam, Women and Civil Rights: the Religious debate in the Iran of the 1990s", "prénom":"Ziba", "nom":"Mir-Hosseini", "coauteurs":"Azadeh Kian-Thiébaut", "année":"2002", "site":"Abstracta Iranica", "éditeur":"Curzon Press et Royal Asiatic Society, Londres", "série":"dans Sarah Ansari et Vanessa Martin (dir.), Women, Religion and Culture in Iran", "isbn":"1234567890123", "page":"169-188", "citation":"Les femmes et leurs droits se trouvent désormais au cœur des débats jurisprudentiels où s’affrontent les visions réformatrices et conservatrices.", "en ligne le":"15 mars 2006", "consulté le":"2 octobre 2006"}))
     '<i>(anglais)</i> Ziba Mir-Hosseini, Azadeh Kian-Thiébaut, <i>Islam, Women and Civil Rights: the Religious debate in the Iran of the 1990s</i>, dans Sarah Ansari et Vanessa Martin (dir.), Women, Religion and Culture in Iran sur <i>Abstracta Iranica</i>, Curzon Press et Royal Asiatic Society, Londres, 2002, ISBN 1234567890123. Mis en ligne le 15 mars 2006, consulté le 2 octobre 2006. «&nbsp;Les femmes et leurs droits se trouvent désormais au cœur des débats jurisprudentiels où s’affrontent les visions réformatrices et conservatrices.&nbsp;», page 169-188'
+    >>> render_lien_web("Lien web", [], defaultdict(str, {"titre":"The Weasel-Lobster Race", "auteur":"auteur", "auteur2": "auteur2" }))
+    'auteur, auteur2, <i>The Weasel-Lobster Race</i>'
+    >>> render_lien_web("Lien web", [], defaultdict(str, {"titre":"The Weasel-Lobster Race", "nom":"nom", "prénom": "prénom", "nom2":"nom2", "prénom2": "prénom2"}))
+    'prénom nom, prénom2 nom2, <i>The Weasel-Lobster Race</i>'
     """  # noqa
     phrase = ""
     if data["langue"]:
@@ -552,7 +557,7 @@ def render_lien_web(tpl: str, parts: List[str], data: Dict[str, str]) -> str:
     elif data["prénom"]:
         phrase += data["prénom"] + " " + data["nom"]
     if data["auteur2"]:
-        phrase += ", " + data["auteur"]
+        phrase += ", " + data["auteur2"]
     elif data["prénom2"]:
         phrase += ", " + data["prénom2"] + " " + data["nom2"]
     if data["coauteurs"]:
@@ -762,6 +767,66 @@ def render_suppletion(tpl: str, parts: List[str], data: Dict[str, str]) -> str:
     return phrase
 
 
+def render_unite(tpl: str, parts: List[str], data: Dict[str, str]) -> str:
+    """
+    >>> render_unite("unité", ["1234567"], defaultdict(str, {}))
+    '1 234 567'
+    >>> render_unite("unité", ["1234567.89"], defaultdict(str, {}))
+    '1 234 567,89'
+    >>> render_unite("unité", ["10.5", "m"], defaultdict(str, {}))
+    '10,5 m'
+    >>> render_unite("unité", ["10000", "km"], defaultdict(str, {}))
+    '10 000 km'
+    >>> render_unite("unité", ["10000", "km/h"], defaultdict(str, {}))
+    '10 000 km/h'
+    >>> render_unite("unité", ["10000", "km", "2"], defaultdict(str, {}))
+    '10 000 km<sup>2</sup>'
+    >>> render_unite("unité", ["10000", "km", "3"], defaultdict(str, {}))
+    '10 000 km<sup>3</sup>'
+    >>> render_unite("unité", ["10000", "kilomètres par heure"], defaultdict(str, {}))
+    '10 000 kilomètres par heure'
+    >>> render_unite("unité", ["10000", "km", "", "h", "-1"], defaultdict(str, {}))
+    '10 000 km⋅h<sup>-1</sup>'
+    >>> render_unite("unité", ["10000", "J", "2", "K", "3", "s", "-1"], defaultdict(str, {}))
+    '10 000 J<sup>2</sup>⋅K<sup>3</sup>⋅s<sup>-1</sup>'
+    >>> render_unite("unité", ["10000", "J", "", "kg", "", "m", "-2"], defaultdict(str, {}))
+    '10 000 J⋅kg⋅m<sup>-2</sup>'
+    >>> render_unite("unité", ["−40.234", "°C"], defaultdict(str, {}))
+    '−40,234 °C'
+    >>> render_unite("unité", ["1.23456", "J", "2", "K", "3", "s", "-1"], defaultdict(str, {"e": "9"}))
+    '1,23456×10<sup>9</sup> J<sup>2</sup>⋅K<sup>3</sup>⋅s<sup>-1</sup>'
+    >>> render_unite("unité", ["1", "m<sup>2</sup>"], defaultdict(str, {}))
+    '1 m<sup>2</sup>'
+
+    >>> # Spaces are not well handled in the decimal part:
+    >>> # render_unite("unité", ["1,23456789"], defaultdict(str, {"e": 15}))
+    >>> # '1,23 456 789×10<up>15</sup>'
+    >>> # The rounding is not good here:
+    >>> # render_unite("unité", ["1234567890.12345678", "¤"], defaultdict(str, {}))
+    >>> # '1 234 567 890,12345678 ¤'
+    """
+    from . import float_separator, thousands_separator
+
+    sep = "⋅"
+    phrase = number(parts.pop(0), float_separator, thousands_separator)
+    if data["e"]:  # exposant
+        phrase += "×10" + superscript(data["e"])
+    if parts:  # symbol
+        phrase += " " + parts.pop(0)
+
+    # Alternate exposant > symbol > exposant > symbol > ...
+    is_exposant = True
+    while parts:
+        part = parts.pop(0)
+        if is_exposant:
+            phrase += superscript(part) if part else sep
+        else:  # symbol
+            phrase += sep + part if phrase[-1] != sep else part
+        is_exposant = not is_exposant
+
+    return phrase
+
+
 def render_variante_ortho(tpl: str, parts: List[str], data: Dict[str, str]) -> str:
     """
     >>> render_variante_ortho("variante ortho de", ["acupuncture", "fr"], defaultdict(str))
@@ -884,6 +949,8 @@ template_mapping = {
     "Variante ortho de": render_variante_ortho,
     "variante ortho de": render_variante_ortho,
     "variante orthographique de": render_variante_ortho,
+    "Unité": render_unite,
+    "unité": render_unite,
     "univerbation": render_modele_etym,
     "w": defaults.render_wikilink,
     "W": defaults.render_wikilink,

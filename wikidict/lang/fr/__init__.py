@@ -571,7 +571,9 @@ templates_multi = {
     "région": "term(parts[1] if len(parts) > 1 else 'Régionalisme')",
     "régionalisme": "term(parts[1] if len(parts) > 1 else 'Régionalisme')",
     # {{re}}
-    "re": "superscript(parts[1] if len(parts) > 1 else 'ère')",
+    "re": "superscript(parts[1] if len(parts) > 1 else 're')",
+    # {{registre|traditionnellement}}
+    "registre": "italic(f\"({capitalize(parts[1])})\") if len(parts) > 1 else ''",
     # {{smcp|Dupont}}
     "smcp": "small_caps(parts[1])",
     # {{SIC}}
@@ -592,10 +594,6 @@ templates_multi = {
     # {{trad+|conv|Sitophilus granarius}}
     "trad+": "parts[2]",
     "trad-": "parts[2]",
-    # {{unité|92|%}}
-    "unité": "concat(parts[1:], sep=' ')",
-    # {{Unité|60|cm}}
-    "Unité": "concat(parts[1:], sep=' ')",
     # {{variante de|ranche|fr}}
     "variante de": "sentence(parts)",
     "Variante de": "sentence(parts)",
@@ -696,6 +694,8 @@ def last_template_handler(
 
         >>> last_template_handler(["code langue", "créole guyanais"], "fr")
         'gcr'
+        >>> last_template_handler(["code langue", "foo"], "fr")
+        ''
 
         >>> last_template_handler(["R:TLFi"], "fr", "pedzouille")
         '«&nbsp;pedzouille&nbsp;», dans <i>TLFi, Le Trésor de la langue française informatisé</i>, 1971–1994'

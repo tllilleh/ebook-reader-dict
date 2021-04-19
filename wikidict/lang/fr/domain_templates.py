@@ -159,7 +159,8 @@ domain_templates = {
     "latinisme droit": "Latinisme en droit",
     "latinismes en droit": "Latinisme en droit",
     "lianes": "Botanique",
-    "lieux": "Géographie",
+    "lieux imaginaires": "Géographie",
+    "lieux mythologiques": "Mythologie",
     "localités": "Géographie",
     "légumes": "Botanique",
     "léporidés": "Mammalogie",
@@ -257,6 +258,7 @@ domain_templates = {
     "serpents": "Herpétologie",
     "singes": "Zoologie",
     "soldats": "Militaire",
+    "sous-régions": "Toponyme",
     "spatules": "Ornithologie",
     "sportifs": "Sport",
     "sports": "Sport",
@@ -302,5 +304,5 @@ domain_templates = {
     "états": "État",
     "étoiles": "Astronomie",
     "îles": "Géographie",
-}  # 297
+}  # 299
 # END
